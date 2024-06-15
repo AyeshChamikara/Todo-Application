@@ -35,7 +35,7 @@ public class HomeActivity extends AppCompatActivity {
 
         dialogLayout = findViewById(R.id.logoutConfirmationDialog);
         tvLogoutMessage = dialogLayout.findViewById(R.id.tvLogoutMessage);
-        btnYes = dialogLayout.findViewById(R.id.btnYes); // Fixed: Initialize btnYes
+        btnYes = dialogLayout.findViewById(R.id.btnYes);
         Button btnNo = dialogLayout.findViewById(R.id.btnNo);
 
         ImageView UserProfileImage = findViewById(R.id.UserProfileImage);
@@ -43,27 +43,25 @@ public class HomeActivity extends AppCompatActivity {
         eventsContainer = findViewById(R.id.eventsContainer);
         dbHelper = new DatabaseHelper(this);
 
+        SharedPreferences sharedPreferences = getSharedPreferences("userLoginStatus", Context.MODE_PRIVATE);
+        String userName = sharedPreferences.getString("userName", "");
+
+        TextView name = findViewById(R.id.Name);
+        name.setText(userName);
+
         loadEvents();
 
-        addTaskButton.setOnClickListener(v -> {
-            startActivity(new Intent(HomeActivity.this, AddNewEventActivity.class));
-            finish();
-        });
+        addTaskButton.setOnClickListener(v -> startActivity(new Intent(HomeActivity.this, AddNewEventActivity.class)));
 
-        UserProfileImage.setOnClickListener(v -> {
-            startActivity(new Intent(HomeActivity.this, UserInformationActivity.class));
-            finish();
-        });
+        UserProfileImage.setOnClickListener(v -> startActivity(new Intent(HomeActivity.this, UserInformationActivity.class)));
 
         logOutButton.setOnClickListener(v -> showLogoutDialog(() -> {
-            SharedPreferences sharedPreferences = getSharedPreferences("userLoginStatus", Context.MODE_PRIVATE);
-            @SuppressLint("CommitPrefEdits") SharedPreferences.Editor editor = sharedPreferences.edit();
+            SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putBoolean("isLoggedIn", false);
-            editor.apply(); // Fixed: Apply changes to SharedPreferences
+            editor.apply();
 
             Toast.makeText(HomeActivity.this, "Logged out successfully", Toast.LENGTH_SHORT).show();
             startActivity(new Intent(HomeActivity.this, MainActivity.class));
-            finish();
         }));
 
         btnNo.setOnClickListener(v -> dialogLayout.setVisibility(View.GONE));
@@ -76,6 +74,7 @@ public class HomeActivity extends AppCompatActivity {
         btnYes.setOnClickListener(v -> {
             dialogLayout.setVisibility(View.GONE);
             onYesAction.run();
+            finish();
         });
     }
 
@@ -83,39 +82,40 @@ public class HomeActivity extends AppCompatActivity {
         eventsContainer.removeAllViews();
         Cursor cursor = dbHelper.getAllTasks();
 
-        if (cursor != null && cursor.moveToFirst()) {
-            do {
-                @SuppressLint("Range") String id = cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_ID));
-                @SuppressLint("Range") String title = cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_TASK_NAME));
-                @SuppressLint("Range") String date = cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_TASK_DATE));
-                @SuppressLint("Range") String time = cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_TASK_TIME));
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                do {
+                    @SuppressLint("Range") String id = cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_ID));
+                    @SuppressLint("Range") String title = cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_TASK_NAME));
+                    @SuppressLint("Range") String date = cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_TASK_DATE));
+                    @SuppressLint("Range") String time = cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_TASK_TIME));
 
-                View eventView = LayoutInflater.from(this).inflate(R.layout.event_item, eventsContainer, false);
+                    View eventView = LayoutInflater.from(this).inflate(R.layout.event_item, eventsContainer, false);
 
-                TextView tvEventTitle = eventView.findViewById(R.id.tvEventTitle);
-                TextView tvEventDate = eventView.findViewById(R.id.tvEventDate);
-                TextView tvEventTime = eventView.findViewById(R.id.tvEventTime);
-                ImageButton btnEdit = eventView.findViewById(R.id.btnEdit);
-                ImageButton btnDelete = eventView.findViewById(R.id.btnDelete);
+                    TextView tvEventTitle = eventView.findViewById(R.id.tvEventTitle);
+                    TextView tvEventDate = eventView.findViewById(R.id.tvEventDate);
+                    TextView tvEventTime = eventView.findViewById(R.id.tvEventTime);
+                    ImageButton btnEdit = eventView.findViewById(R.id.btnEdit);
+                    ImageButton btnDelete = eventView.findViewById(R.id.btnDelete);
 
-                tvEventTitle.setText(title);
-                tvEventDate.setText(date);
-                tvEventTime.setText(time);
+                    tvEventTitle.setText(title);
+                    tvEventDate.setText(date);
+                    tvEventTime.setText(time);
 
-                btnEdit.setOnClickListener(v -> {
-                    Intent intent = new Intent(HomeActivity.this, EditTaskActivity.class);
-                    intent.putExtra("EVENT_ID", id);
-                    startActivity(intent);
-                });
+                    btnEdit.setOnClickListener(v -> {
+                        Intent intent = new Intent(HomeActivity.this, EditTaskActivity.class);
+                        intent.putExtra("EVENT_ID", id);
+                        startActivity(intent);
+                    });
 
-                btnDelete.setOnClickListener(v -> {
-                    dbHelper.deleteTask(id);
-                    loadEvents();
-                });
+                    btnDelete.setOnClickListener(v -> {
+                        dbHelper.deleteTask(id);
+                        loadEvents();
+                    });
 
-                eventsContainer.addView(eventView);
-            } while (cursor.moveToNext());
-
+                    eventsContainer.addView(eventView);
+                } while (cursor.moveToNext());
+            }
             cursor.close();
         }
     }

@@ -52,12 +52,11 @@
             android:textSize="24sp" />
 
         <TextView
-            android:id="@+id/textView9"
+            android:id="@+id/Name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="5dp"
             android:fontFamily="@font/inriaserif_bold"
-            android:text="Ayesh"
             android:textColor="@color/black"
             android:textSize="24sp" />
     </LinearLayout>
